@@ -18,6 +18,8 @@ prompt = { git = "https://github.com/kobigurk/zkhack-prompt" }
 blake2s_simd = "0.5.11"
 nalgebra = "0.31.0"
 bitvec = "1.0.0"
+ndarray = "0.15.4"
+ndarray-linalg = "0.14.1"
 
 [[bin]]
 name = "verify-bls-pedersen"
