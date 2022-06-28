@@ -70,12 +70,31 @@ fn main() -> Result<(), Box<dyn Error>> {
     // println!("{:?}", ms_hashes);
 
     // Solve A x = v
+    // Each bit in the hash representes whether a fixed G will be added to compute the signature
+    // For each row of the matrix A, we have:
+    // a_i[1].G_1 + ... + a_i[n].G_n = B_i where B_i is the hash-to-curve output of the message a_i
+    // So S_i = [sk]B_i = [sk].( a_i[1].G_1 ) + ... + [sk].( a_i[n].G_n ) = a_i[1].( [sk].G_1 ) + ...
+    // So if some combination of input hashes = h, then the same combination of S_i = S(h)
+    // S(h) = [sk].( \sigma(a_i[1]).G_1 )
+    // \sigma(S_i) = ( \sigma(a_i[1]) ).( [sk].G_1 )
+    // x: linear representation of v in basis formed by A - the set of hashes of all input messages
+    // v: our hash i.e. our 
+
+    // we wish to solve:
+    // m_0.[sk[G_0]] + ... + m_n.[sk.[G_n]] = B,
+    // where B is the signature
+    // so we're solving for Ax = B
+    // A is the matrix of hashes of all input messages
+    // x is the vector sk[G_0], ..., sk[G_n]
+    // B is the vector of signatures
+    // once we solve for vec x, we can compute a signature for any message
+    // since signature on any message Y: S(Y) = Y_0.[sk[G_0]] + ... + Y_n.[sk.[G_n]] = Y * x
     let v = DMatrix::from_vec(256, 1, hash);
     let mx = DMatrix::from_vec(256, 256, ms_hashes);
     println!("About to");
-    // println!("{}", mx.is_invertible());
+    println!("is invertible: {}", mx.clone().is_invertible());
 
-    let hell_yeah = mx
+    let hell_yeah = &mx
         .lu()
         .solve(&v)
         .unwrap()
@@ -91,7 +110,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     //     Some(m) => m,
     //     None => return Ok(()),
     // };
-    println!("{:?}", hell_yeah);
+    // println!("{:?}", hell_yeah);
 
     // let hell_yeah = &v * &mx_inv;
     // println!("{:?}", hell_yeah);
@@ -104,31 +123,31 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // let sig_m = hell_yeah * sigs_mx;
 
-    let mut i = 0;
-    let mut acc = G1Projective::zero();
-    for (factor, sig) in hell_yeah.iter().zip(sigs.iter()) {
-        let numer = match factor.numer() {
-            Some(num) => num,
-            None => return Ok(()),
-        };
-        let denom = match factor.denom() {
-            Some(num) => num,
-            None => return Ok(()),
-        };
+    // let mut i = 0;
+    // let mut acc = G1Projective::zero();
+    // for (factor, sig) in hell_yeah.iter().zip(sigs.iter()) {
+    //     let numer = match factor.numer() {
+    //         Some(num) => num,
+    //         None => return Ok(()),
+    //     };
+    //     let denom = match factor.denom() {
+    //         Some(num) => num,
+    //         None => return Ok(()),
+    //     };
 
-        //TODO this is wrong
-        let mut res = sig.mul(*numer);
-        // res -= sig.mul(*denom);
+    //     //TODO this is wrong
+    //     let mut res = sig.mul(*numer);
+    //     // res -= sig.mul(*denom);
 
-        if let fraction::Sign::Minus = factor.sign().unwrap() {
-            res = -res;
-        };
+    //     if let fraction::Sign::Minus = factor.sign().unwrap() {
+    //         res = -res;
+    //     };
 
-        acc += res;
-    }
+    //     acc += res;
+    // }
 
-    let det: ark_bls12_381::Fq2 = field_new!(Fq, "50000000");
-    acc.into_affine().verify(pk, m, acc.into());
+    // let det: ark_bls12_381::Fq2 = field_new!(Fq, "50000000");
+    // acc.into_affine().verify(pk, m, acc.into());
 
     // let sigs = sigs_strs
     //     .iter()
