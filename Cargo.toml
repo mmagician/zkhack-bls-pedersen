@@ -23,6 +23,7 @@ fraction = "0.9.0"
 typenum = "*"
 num-traits = "*"
 num-bigint = "*"
+num = "0.4.*"
 
 [[bin]]
 name = "verify-bls-pedersen"
