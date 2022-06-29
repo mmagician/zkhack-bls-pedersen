@@ -1,5 +1,6 @@
 pub mod bls;
 pub mod data;
+pub mod x;
 pub mod hash;
 
 pub const PUZZLE_DESCRIPTION: &str = r#"Alice designed an authentication system in which users gain access by presenting it a signature on a username, which Alice provided.

@@ -1,7 +1,7 @@
 use ark_bls12_381::{G1Affine, G1Projective};
 use ark_crypto_primitives::crh::{
     pedersen::{Window, CRH},
-    CRH as CRHScheme,
+    CRHScheme,
 };
 use rand::SeedableRng;
 use rand_chacha::ChaCha20Rng;
