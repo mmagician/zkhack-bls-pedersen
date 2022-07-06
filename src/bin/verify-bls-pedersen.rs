@@ -4,9 +4,12 @@ use ark_ec::AffineCurve;
 use ark_ec::ProjectiveCurve;
 use bls_pedersen::data::puzzle_data;
 use bls_pedersen::verify;
+use num::BigUint;
 use nalgebra::*;
+use num::BigInt;
 use num::integer::lcm;
 use num_traits::identities::Zero;
+use std::convert::TryInto;
 use std::error::Error;
 type F = fraction::Fraction;
 use ark_bls12_381::Fr;
@@ -27,7 +30,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let m = "alxs".as_bytes();
     let hash = bytes_to_bits(blake2s_simd::blake2s(m).as_bytes())
         .into_iter()
-        .map(|x| x as i32 as f32)
+        .map(|x| x as i32 as f64)
         .collect::<Vec<_>>();
 
     // println!("{:?}", m_b2hash);
@@ -37,7 +40,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .flat_map(|m| {
             bytes_to_bits(blake2s_simd::blake2s(m).as_bytes())
                 .into_iter()
-                .map(|x| x as i32 as f32)
+                .map(|x| x as i32 as f64)
         })
         .collect::<Vec<_>>();
 
@@ -77,7 +80,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         .data
         .as_vec()
         .iter()
-        .map(|h: &f32| F::from(*h))
+        // TODO these should be rational already before the solving
+        .map(|h: &f64| F::from(*h))
         .collect::<Vec<_>>();
 
     let lcm = hell_yeah
@@ -106,17 +110,17 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut acc = G1Projective::zero();
     for (factor, sig) in hell_yeah.iter().zip(sigs.iter()) {
-        let numer = factor.numer().unwrap();
-        let denom = factor.denom().unwrap();
+        let numer = BigUint::from(*factor.numer().unwrap());
+        let denom = BigUint::from(*factor.denom().unwrap());
 
-        println!("factor: {}", lcm / denom * numer);
         let res = lcm / denom * numer;
+        println!("factor: {}", res);
         // res -= sig.mul(*denom);
 
         if let fraction::Sign::Minus = factor.sign().unwrap() {
-            acc -= sig.mul(res);
+            acc -= sig.mul(Fr::from(res));
         } else {
-            acc += sig.mul(res);
+            acc += sig.mul(Fr::from(res));
         }
     }
 
