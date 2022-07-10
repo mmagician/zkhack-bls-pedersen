@@ -59,6 +59,18 @@ impl Mul<DynamicVector> for MsgVector {
     }
 }
 
+fn hash_to_binary(hash: Vec<u8>) -> Vec<f64> {
+    hash.iter()
+        .flat_map(|c| {
+            let bits: Vec<f64> = BitVec::<_, Msb0>::from_element(*c)
+                .iter()
+                .map(|b| f64::from(u8::from(*b)))
+                .collect();
+            bits
+        })
+        .collect()
+}
+
 fn main() {
     welcome();
     puzzle(PUZZLE_DESCRIPTION);
@@ -78,17 +90,7 @@ fn main() {
     let ms_iter: Vec<f64> = ms
         .iter()
         .flat_map(|m| {
-            let col: Vec<f64> = m
-                .iter()
-                .flat_map::<_, _>(|c| {
-                    let bits: Vec<f64> = BitVec::<_, Msb0>::from_element(*c)
-                        .iter()
-                        .map(|b| f64::from(u8::from(*b)))
-                        .collect();
-                    bits
-                })
-                .collect();
-            col
+            hash_to_binary(m.to_vec())
         })
         .collect();
 
@@ -103,39 +105,11 @@ fn main() {
     // since signature on any message Y: S(Y) = Y_0.[sk[G_0]] + ... + Y_n.[sk.[G_n]] = Y * x
     println!("num of entries: {:?}", ms_iter.len());
     let M = DynamicMatrix::from_vec(256, 256, ms_iter);
-    // println!("{:?}", M);
 
-    let m: Vec<u8> = target_message_hash
-        .as_bytes()
-        .to_vec()
-        .iter()
-        .flat_map(|c| {
-            let bits: Vec<u8> = BitVec::<_, Msb0>::from_element(*c)
-                .iter()
-                .map(|b| u8::from(*b))
-                .collect();
-            bits
-        })
-        .collect();
-    println!("m1: {:?}", m);
-    let m = bytes_to_bits(target_message_hash.as_bytes())
-        .iter()
-        .map(|b| (*b as u8) as f64)
-        .collect::<Vec<f64>>();
+    let m: Vec<_> = hash_to_binary(target_message_hash.as_bytes().to_vec());
+
     println!("m: {:?}", m);
     println!("target hash: {:?}", target_message_hash);
-    // let m_vec = DynamicVectorB::from_vec(m.clone());
-
-    // let x = M.lu().solve(&m_vec);
-    println!("my msg hash: {:?}", m);
-    // let rank = M.rank(0.0);
-    // println!("rank: {:?}", rank);
-
-    // let m_inv_determinant = M.determinant();
-    // let mut inv = M.transpose().try_inverse().unwrap();
-    // println!("{:?}", inv);
-    // inv *= m_inv_determinant;
-    // let x: DynamicVector = inv * SigVector(sigs);
     let x = read_x();
     // assert_eq!(SigVector(sigs), M * SigVector(x));
 
